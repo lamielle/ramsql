@@ -14,6 +14,14 @@ package parser
 //	            |-> value
 //	            |-> (...)
 //	        |-> (...)
+//	    |-> "ON" (OnToken) (optional)
+//	        |-> "CONFLICT" (ConflictToken)
+//	            |-> (optional) column name
+//	            |-> "DO" (DoToken)
+//	                |-> "UPDATE" (UpdateToken)
+//	                    |-> "SET" (SetToken)
+//	                        |-> column name
+//	                        |-> (...)
 //	    |-> "RETURNING" (ReturningToken) (optional)
 //	        |-> column name
 func (p *parser) parseInsert() (*Instruction, error) {
@@ -106,6 +114,94 @@ func (p *parser) parseInsert() (*Instruction, error) {
 		}
 
 		break
+	}
+
+	// we may have `ON CONFLICT DO UPDATE` here
+	if onDecl, err := p.consumeToken(OnToken); err == nil {
+		insertDecl.Add(onDecl)
+
+		// should be CONFLICT
+		conflictDecl, err := p.consumeToken(ConflictToken)
+		if err != nil {
+			return nil, err
+		}
+		onDecl.Add(conflictDecl)
+
+		// Optional: (column, ...)
+		if p.is(BracketOpeningToken) {
+			_, err := p.consumeToken(BracketOpeningToken)
+			if err != nil {
+				return nil, err
+			}
+
+			for {
+				decl, err := p.parseAttribute()
+				if err != nil {
+					return nil, err
+				}
+				conflictDecl.Add(decl)
+
+				if p.is(BracketClosingToken) {
+					_, err := p.consumeToken(BracketClosingToken)
+					if err != nil {
+						return nil, err
+					}
+					break
+				}
+
+				_, err = p.consumeToken(CommaToken)
+				if err != nil {
+					return nil, err
+				}
+			}
+		}
+
+		// should be DO
+		doDecl, err := p.consumeToken(DoToken)
+		if err != nil {
+			return nil, err
+		}
+		conflictDecl.Add(doDecl)
+
+		if p.is(UpdateToken) {
+			// should be UPDATE
+			updateDecl, err := p.consumeToken(UpdateToken)
+			if err != nil {
+				return nil, err
+			}
+			doDecl.Add(updateDecl)
+
+			// should be SET
+			setDecl, err := p.consumeToken(SetToken)
+			if err != nil {
+				return nil, err
+			}
+			updateDecl.Add(setDecl)
+
+			// should be a list of equality
+			for {
+				attributeDecl, err := p.parseAttribution()
+				if err != nil {
+					return nil, err
+				}
+				setDecl.Add(attributeDecl)
+
+				if !p.is(CommaToken) {
+					break
+				}
+				if _, err := p.consumeToken(CommaToken); err != nil {
+					return nil, err
+				}
+			}
+		} else if p.is(NothingToken) {
+			nothingDecl, err := p.consumeToken(NothingToken)
+			if err != nil {
+				return nil, err
+			}
+			doDecl.Add(nothingDecl)
+		} else {
+			return nil, p.syntaxError()
+		}
 	}
 
 	// we may have `returning "something"` here

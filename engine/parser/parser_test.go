@@ -140,6 +140,11 @@ func TestInsertMinimal(t *testing.T) {
 	parse(query, 1, t)
 }
 
+func TestInsertOnConflict(t *testing.T) {
+	query := `INSERT INTO account ('email', 'password', 'age') VALUES ('foo@bar.com', 'tititoto', '4') ON CONFLICT (email) DO UPDATE SET password = 'newpassword'`
+	parse(query, 1, t)
+}
+
 func TestInsertNumber(t *testing.T) {
 	query := `INSERT INTO account ('email', 'password', 'age') VALUES ('foo@bar.com', 'tititoto', 4)`
 	parse(query, 1, t)
@@ -253,6 +258,12 @@ func TestOffset(t *testing.T) {
 	parse(query, 1, t)
 }
 
+func TestOrderByOffsetLimit(t *testing.T) {
+	query := `SELECT id,foo,bar FROM mytable WHERE id=$1 order by id limit $2 offset $3`
+
+	parse(query, 1, t)
+}
+
 func TestUnique(t *testing.T) {
 	queries := []string{
 		`CREATE TABLE pokemon (id BIGSERIAL, name TEXT UNIQUE NOT NULL)`,
@@ -274,7 +285,6 @@ func TestAlias(t *testing.T) {
 	for _, q := range queries {
 		parse(q, 1, t)
 	}
-
 }
 
 func TestDecimal(t *testing.T) {
@@ -366,7 +376,6 @@ func TestSchema(t *testing.T) {
 }
 
 func TestArguments(t *testing.T) {
-
 	queries := []string{
 		`SELECT * FROM foo WHERE bar = $1 and enabled = true`,
 		`UPDATE foo SET bar = $1, elabled = $2 WHERE bar = $3`,
@@ -383,7 +392,6 @@ func TestArguments(t *testing.T) {
 }
 
 func parse(query string, instructionNumber int, t *testing.T) []Instruction {
-
 	parser := parser{}
 	lexer := lexer{}
 	decls, err := lexer.lex([]byte(query))

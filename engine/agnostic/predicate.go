@@ -73,7 +73,7 @@ type Selector interface {
 	Select([]string, []*list.Element) ([]*Tuple, error)
 }
 
-// Predicate defines filter to be applied on spcified relation row
+// Predicate defines filter to be applied on specified relation row
 type Predicate interface {
 	Picker
 	Type() PredicateType
@@ -89,7 +89,7 @@ type Source interface {
 	Columns() []string
 }
 
-// Node is an element of a quey plan
+// Node is an element of a query plan
 //
 // Joiner, Sorter and Scanner implement Node.
 type Node interface {

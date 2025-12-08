@@ -359,7 +359,7 @@ func (t *Transaction) Update(schema, relation string, values map[string]any, sel
 // - check primary key
 // - insert into rows list
 // - update index if any
-func (t *Transaction) Insert(schema, relation string, values map[string]any) (*Tuple, error) {
+func (t *Transaction) Insert(schema, relation string, values map[string]any, conflictValues map[string]any) (*Tuple, error) {
 	if err := t.aborted(); err != nil {
 		return nil, err
 	}
@@ -442,6 +442,13 @@ func (t *Transaction) Insert(schema, relation string, values map[string]any) (*T
 		return nil, t.abort(err)
 	}
 	if !ok {
+		if conflictValues != nil {
+			_, _, err := t.Update(schema, relation, conflictValues, nil, nil)
+			if err != nil {
+				return nil, t.abort(err)
+			}
+			return tuple, nil
+		}
 		return nil, t.abort(fmt.Errorf("primary key violation"))
 	}
 

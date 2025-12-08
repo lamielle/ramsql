@@ -251,11 +251,13 @@ func createTableExecutor(t *Tx, tableDecl *parser.Decl, args []NamedValue) (int6
 	        |-> email
 */
 func insertIntoTableExecutor(t *Tx, insertDecl *parser.Decl, args []NamedValue) (int64, int64, []string, []*agnostic.Tuple, error) {
-
 	var lastInsertedID int64
 	var schemaName string
 	var returningAttrs []string
 	var returningIdx []int
+	var conflictValues map[string]any
+	var err error
+
 	relationName := insertDecl.Decl[0].Decl[0].Lexeme
 
 	// Check for RETURNING clause
@@ -269,6 +271,27 @@ func insertIntoTableExecutor(t *Tx, insertDecl *parser.Decl, args []NamedValue) 
 					return 0, 0, nil, nil, fmt.Errorf("cannot return %s, doesn't exist in relation %s", returningDecl.Decl[0].Lexeme, relationName)
 				}
 				returningIdx = append(returningIdx, idx)
+			}
+		}
+	}
+
+	// Check for ON CONFLICT clause
+	if d, ok := insertDecl.Has(parser.OnToken); ok {
+		conflictDecl := d.Decl[0]
+		doDecl := conflictDecl.Decl[1]
+		updateDecl := doDecl.Decl[0]
+		setDecl := updateDecl.Decl[0]
+
+		var specifiedAttrs []string
+		for _, d := range setDecl.Decl {
+			specifiedAttrs = append(specifiedAttrs, d.Lexeme)
+		}
+
+		conflictValues = map[string]any{}
+		for _, s := range setDecl.Decl {
+			_, err = getSet(specifiedAttrs, conflictValues, s, args)
+			if err != nil {
+				return 0, 0, nil, nil, err
 			}
 		}
 	}
@@ -289,7 +312,7 @@ func insertIntoTableExecutor(t *Tx, insertDecl *parser.Decl, args []NamedValue) 
 		if err != nil {
 			return 0, 0, nil, nil, err
 		}
-		tuple, err := t.tx.Insert(schemaName, relationName, values)
+		tuple, err := t.tx.Insert(schemaName, relationName, values, conflictValues)
 		if err != nil {
 			return 0, 0, nil, nil, err
 		}

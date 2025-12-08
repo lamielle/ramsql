@@ -200,7 +200,6 @@ func (t *Tx) getPredicates(decl []*parser.Decl, schema, fromTableName string, ar
 	var odbcIdx int64 = 1
 
 	for i, cond := range decl {
-
 		if cond.Token == parser.AndToken {
 			if i+1 == len(decl) {
 				return nil, fmt.Errorf("query error: AND not followed by any predicate")
@@ -212,7 +211,7 @@ func (t *Tx) getPredicates(decl []*parser.Decl, schema, fromTableName string, ar
 
 		if cond.Token == parser.OrToken {
 			if i+1 == len(decl) {
-				return nil, fmt.Errorf("query error: OR not followd by any predicate")
+				return nil, fmt.Errorf("query error: OR not followed by any predicate")
 			}
 			p, err := t.or(decl[:i], decl[i+1:], schema, fromTableName, args, aliases)
 			return p, err

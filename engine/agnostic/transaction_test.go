@@ -167,12 +167,12 @@ func TestInsertTotal(t *testing.T) {
 
 	values := make(map[string]any)
 	values["bar"] = "test"
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err == nil {
 		t.Fatalf("expected error with foo attribute not specified")
 	}
 
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err == nil {
 		t.Fatalf("expected transaction aborted due to previous error")
 	}
@@ -184,7 +184,7 @@ func TestInsertTotal(t *testing.T) {
 	defer tx.Rollback()
 
 	values["foo"] = 1
-	tuple, err := tx.Insert(schema, relation, values)
+	tuple, err := tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
@@ -248,7 +248,7 @@ func TestInsertRollback(t *testing.T) {
 	values := make(map[string]any)
 	values["bar"] = "test"
 	values["foo"] = 1
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
@@ -301,7 +301,7 @@ func TestInsertPartial(t *testing.T) {
 
 	values := make(map[string]any)
 	values["foo"] = `{}`
-	tuple, err := tx.Insert(schema, relation, values)
+	tuple, err := tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
@@ -379,7 +379,7 @@ func TestPrimaryKey(t *testing.T) {
 	values["foo"] = 1
 	values["bar"] = "testbar"
 	values["baz"] = "testbaz"
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("didn´t expect error on first insert: %s", err)
 	}
@@ -387,12 +387,12 @@ func TestPrimaryKey(t *testing.T) {
 	values["foo"] = 2
 	values["bar"] = "testbar2"
 	values["baz"] = "testbaz2"
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("didn´t expect error on second insert: %s", err)
 	}
 
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err == nil {
 		t.Fatalf("expected primary key constraint error")
 	}
@@ -432,19 +432,19 @@ func TestIndexCreation(t *testing.T) {
 
 	values := make(map[string]any)
 	values["foo"] = `{"foo":"a"}`
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
 
 	values["foo"] = `{"foo":"b"}`
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
 
 	values["foo"] = `{"foo":"c"}`
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
@@ -473,7 +473,7 @@ func TestIndexCreation(t *testing.T) {
 	}
 	defer tx.Rollback()
 
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err == nil {
 		t.Fatalf("expected UNIQUE violation on json")
 	}
@@ -509,19 +509,19 @@ func TestQuery(t *testing.T) {
 
 	values := make(map[string]any)
 	values["foo"] = `a`
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
 
 	values["foo"] = `b`
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
 
 	values["foo"] = `c`
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert values: %s", err)
 	}
@@ -606,7 +606,7 @@ func TestQuery(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		_, err = tx.Insert(schema, "task", values)
+		_, err = tx.Insert(schema, "task", values, false, nil, nil)
 		if err != nil {
 			t.Fatalf("cannot insert values: %s", err)
 		}
@@ -618,7 +618,7 @@ func TestQuery(t *testing.T) {
 		for j := 50; j < 100; j++ {
 			values["parent_id"] = i
 			values["child_id"] = j
-			_, err = tx.Insert(schema, "task_link", values)
+			_, err = tx.Insert(schema, "task_link", values, false, nil, nil)
 			if err != nil {
 				t.Fatalf("cannot insert values: %s", err)
 			}
@@ -685,7 +685,7 @@ func TestCount(t *testing.T) {
 
 	values := make(map[string]any)
 	for i := 0; i < 100; i++ {
-		_, err = tx.Insert(schema, "task", values)
+		_, err = tx.Insert(schema, "task", values, false, nil, nil)
 		if err != nil {
 			t.Fatalf("cannot insert values: %s", err)
 		}
@@ -790,7 +790,7 @@ func TestDistinct(t *testing.T) {
 		for i := 0; i < 10; i++ {
 			values["location"] = loc
 			values["time"] = thatTimeOfYear
-			_, err = tx.Insert(schema, relation, values)
+			_, err = tx.Insert(schema, relation, values, false, nil, nil)
 			if err != nil {
 				t.Fatalf("cannot insert values: %s", err)
 			}
@@ -861,7 +861,7 @@ func TestIn(t *testing.T) {
 		values["surname"] = n
 		values["age"] = 10
 
-		_, err = tx.Insert(schema, "user", values)
+		_, err = tx.Insert(schema, "user", values, false, nil, nil)
 		if err != nil {
 			t.Fatalf("cannot insert values: %s", err)
 		}
@@ -882,7 +882,7 @@ func TestIn(t *testing.T) {
 		values["name"] = n
 		values["region"] = 13434
 
-		_, err = tx.Insert(schema, "animal", values)
+		_, err = tx.Insert(schema, "animal", values, false, nil, nil)
 		if err != nil {
 			t.Fatalf("cannot insert values: %s", err)
 		}
@@ -1040,7 +1040,7 @@ func TestUpdate(t *testing.T) {
 	values := make(map[string]any)
 	for i := 0; i < 100; i++ {
 		values["val"] = i
-		_, err = tx.Insert(schema, "task", values)
+		_, err = tx.Insert(schema, "task", values, false, nil, nil)
 		if err != nil {
 			t.Fatalf("cannot insert values: %s", err)
 		}
@@ -1129,25 +1129,25 @@ func TestDelete(t *testing.T) {
 	values := make(map[string]any)
 	values["bar_id"] = 2
 	values["toto_id"] = 3
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}
 	values["bar_id"] = 4
 	values["toto_id"] = 32
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}
 	values["bar_id"] = 5
 	values["toto_id"] = 33
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}
 	values["bar_id"] = 6
 	values["toto_id"] = 4
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}
@@ -1245,25 +1245,25 @@ func TestAlias(t *testing.T) {
 	values := make(map[string]any)
 	values["bar_id"] = 2
 	values["toto_id"] = 3
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}
 	values["bar_id"] = 4
 	values["toto_id"] = 32
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}
 	values["bar_id"] = 5
 	values["toto_id"] = 33
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}
 	values["bar_id"] = 6
 	values["toto_id"] = 4
-	_, err = tx.Insert(schema, relation, values)
+	_, err = tx.Insert(schema, relation, values, false, nil, nil)
 	if err != nil {
 		t.Fatalf("cannot insert: %s", err)
 	}

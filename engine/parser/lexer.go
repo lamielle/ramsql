@@ -87,6 +87,9 @@ const (
 	IndexToken
 	CollateToken
 	NocaseToken
+	ConflictToken
+	DoToken
+	NothingToken
 
 	// Type Token
 
@@ -204,6 +207,9 @@ func (l *lexer) lex(instruction []byte) ([]Token, error) {
 	matchers = append(matchers, l.genericStringMatcher("on", OnToken))
 	matchers = append(matchers, l.genericStringMatcher("collate", CollateToken))
 	matchers = append(matchers, l.genericStringMatcher("nocase", NocaseToken))
+	matchers = append(matchers, l.genericStringMatcher("conflict", ConflictToken))
+	matchers = append(matchers, l.genericStringMatcher("do", DoToken))
+	matchers = append(matchers, l.genericStringMatcher("nothing", NothingToken))
 	// Type Matcher
 	matchers = append(matchers, l.genericStringMatcher("decimal", DecimalToken))
 	matchers = append(matchers, l.genericStringMatcher("primary", PrimaryToken))
